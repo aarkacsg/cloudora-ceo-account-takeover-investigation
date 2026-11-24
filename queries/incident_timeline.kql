@@ -1,0 +1,42 @@
+
+ // Cloudora CEO Account Takeover Investigation
+ // Combined Incident Timeline
+ // Sources: CloudoraSignIn_CL and CloudoraAudit_CL
+ // Date: 10 August 2026 (UTC)
+
+ // Successful attacker-associated sign-ins
+ let SignInEvents =
+     CloudoraSignIn_CL
+     | where IPAddress in (
+         "102.89.44.17",
+         "102.89.44.23",
+         "102.89.45.101"
+     )
+     | where ResultType == "0"
+     | project
+         TimeGenerated,
+         Source = "Sign-in",
+         Account = UserPrincipalName,
+         Activity = AppDisplayName,
+         IPAddress,
+         Details = ResultDescription;
+
+ // Account and mailbox changes
+ let AuditEvents =
+     CloudoraAudit_CL
+     | where IPAddress in (
+         "102.89.44.17",
+         "102.89.44.23",
+         "102.89.45.101"
+     )
+     | project
+         TimeGenerated,
+         Source = "Audit",
+         Account = TargetUser,
+         Activity = ActivityDisplayName,
+         IPAddress,
+         Details;
+
+ // Combine both evidence sources
+ union SignInEvents, AuditEvents
+ | order by TimeGenerated asc
