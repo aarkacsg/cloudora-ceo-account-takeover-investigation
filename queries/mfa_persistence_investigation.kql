@@ -1,0 +1,21 @@
+
+ // Cloudora CEO Account Takeover Investigation
+ // Investigation: MFA registration and mailbox changes
+ // Source: CloudoraAudit_CL
+
+ // Identify suspicious account changes from the
+ // attacker-associated IP addresses.
+
+ CloudoraAudit_CL
+ | where IPAddress in (
+     "102.89.44.17",
+     "102.89.44.23",
+     "102.89.45.101"
+ )
+ | project
+     TimeGenerated,
+     TargetUser,
+     ActivityDisplayName,
+     IPAddress,
+     Details
+ | order by TimeGenerated asc
