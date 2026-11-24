@@ -1,0 +1,45 @@
+
+ // Cloudora CEO Account Takeover Investigation
+ // Account scoping: 8-10 August 2026
+ // Source: CloudoraSignIn_CL
+
+ // QUERY 1: Identify successful sign-ins from
+ // previously identified suspicious IP addresses.
+
+ let AttackerIPs = dynamic([
+     "102.89.44.17",
+     "102.89.44.23",
+     "102.89.45.101"
+ ]);
+ CloudoraSignIn_CL
+ | where IPAddress in (AttackerIPs)
+ | where ResultType == "0"
+ | summarize
+     SuccessfulEvents = count(),
+     FirstSuccess = min(TimeGenerated),
+     LastSuccess = max(TimeGenerated)
+     by UserPrincipalName
+ | order by FirstSuccess asc;
+
+ // QUERY 2: Find targeted accounts with no
+ // observed successful attacker-origin sign-in.
+
+ let AttackerIPs = dynamic([
+     "102.89.44.17",
+     "102.89.44.23",
+     "102.89.45.101"
+ ]);
+ let Breached = CloudoraSignIn_CL
+     | where IPAddress in (AttackerIPs)
+     | where ResultType == "0"
+     | distinct UserPrincipalName;
+ CloudoraSignIn_CL
+ | where IPAddress in (AttackerIPs)
+ | where ResultType == "50126"
+ | where UserPrincipalName !in (Breached)
+ | summarize
+     FailedAttempts = count(),
+     FirstAttempt = min(TimeGenerated),
+     LastAttempt = max(TimeGenerated)
+     by UserPrincipalName
+ | order by FailedAttempts desc
